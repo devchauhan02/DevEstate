@@ -1,5 +1,5 @@
 import express from 'express';
-import signup from '../controllers/auth.controller.js';
+import {signup} from '../controllers/auth.controller.js';
 import {signin} from '../controllers/auth.controller.js';
 import {googleSignIn} from '../controllers/auth.controller.js';
 

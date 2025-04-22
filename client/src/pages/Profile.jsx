@@ -18,11 +18,11 @@ const Profile = () => {
   const handleFileUpload = async (file) => {
     const formData = new FormData();
     formData.append('file', file);
-    formData.append('upload_preset', 'DevEstate');
+    formData.append('upload_preset', import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET);
 
     try {
       const xhr = new XMLHttpRequest();
-      xhr.open('POST', 'https://api.cloudinary.com/v1_1/dohk8ugal/image/upload', true);
+      xhr.open('POST', import.meta.env.VITE_CLOUDINARY_API_URL, true);
       setUploading(true);
 
       xhr.upload.onprogress = (event) => {
@@ -73,16 +73,16 @@ const Profile = () => {
             <img
               src={profilePic}
               alt="Profile"
-              className="h-32 w-32 object-cover rounded-full cursor-pointer"
+              className="h-25 w-25 object-cover rounded-full cursor-pointer"
               onClick={() => fileRef.current.click()}
             />
             {uploading && (
-              <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 rounded-full animate-pulse">
-                <p className="text-white text-sm font-semibold">
-                  Uploading {uploadProgress}%
-                </p>
+              <div className="absolute inset-0 flex flex-col items-center justify-center bg-black bg-opacity-60 rounded-full">
+                <p className="text-white text-sm font-semibold">Uploading</p>
+                <p className="text-white text-sm font-medium">{uploadProgress}%</p>
               </div>
             )}
+
           </div>
           <h2 className="text-xl font-semibold mt-4">{currentUser.name}</h2>
           <p className="text-gray-600 text-sm">{currentUser.email}</p>
@@ -92,17 +92,17 @@ const Profile = () => {
           <input
             type="text"
             placeholder="username"
-            className="border border-gray-300 px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-slate-800"
+            className="border border-gray-300 px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-slate-100"
           />
           <input
             type="email"
             placeholder="email"
-            className="border border-gray-300 px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-slate-800"
+            className="border border-gray-300 px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-slate-100"
           />
           <input
             type="password"
             placeholder="password"
-            className="border border-gray-300 px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-slate-800"
+            className="border border-gray-300 px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-slate-100"
           />
           <button
             type="submit"

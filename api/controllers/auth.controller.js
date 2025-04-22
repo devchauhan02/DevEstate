@@ -1,53 +1,57 @@
 import User from "../models/user.model.js";
 import bcrypt from "bcryptjs";
-import errorHandler from "../utils/error.js";
 import jwt from "jsonwebtoken";
 
-const signup = async (req, res, next) => {    
-    console.log('Signup request received:', req.body);  
+export const signup = async (req, res) => {
+  const { name, email, password } = req.body;
+  console.log("Received signup data:", { name, email, password });
 
-    const { name, email, password } = req.body;
 
-    if (!name || !email || !password) {  
-        return res.status(400).json({ message: 'Please fill all the fields!' });
-    }
+  if (!name || !email || !password) {
+    return res.status(400).json({ message: 'All fields are required' });
+  }
+
   try {
-    const existingUser = await User.findOne({ $or: [{ email }, { name }] });
+    // Check if the user already exists
+    const existingUser = await User.findOne({ email });
     if (existingUser) {
-      if (existingUser.email === email) {
-        return res.status(400).json({ message: 'Email already exists!' });
-      }
-      if (existingUser.name === name) {
-        return res.status(400).json({ message: 'username already exists!' });
-      }
+      return res.status(400).json({ message: 'User already exists' });
     }
+    
+    const hashedPassword = await bcrypt.hash(password, 10);
 
-    const hashedPassword = await bcrypt.hash(password, 10); 
+    const newUser = new User({
+      name,
+      email,
+      password: hashedPassword,
+    });
 
-    const newUser = new   User({  
-        name,
-        email,
-        password : hashedPassword,
-    });  
+    const savedUser = await newUser.save();
 
-   newUser.save()
-        .then(() => {
-            console.log('User saved successfully:', newUser);
-            res.status(201).json({ message: 'User signed up successfully!' });
-        })
-        .catch((err) => {
-           next(errorHandler(500, 'Error saving user to database')); 
-        });
+    const token = jwt.sign(
+      { id: savedUser._id, email: savedUser.email },
+      process.env.JWT_SECRET,
+      { expiresIn: '1000h' } 
+    );
+    console.log(token);
+
+    res.status(201).json({
+      message: 'User created successfully',
+      user: {
+        id: savedUser._id,
+        name: savedUser.name,
+        email: savedUser.email,
+      },
+      token,
+    });
+  } catch (error) {
+    console.error('Error during sign-up:', error);
+    res.status(500).json({ message: 'Internal server error', error });
   }
-  catch (error) {
-    next(error)
-  }
-}       
-export default signup; 
-
+};
 
 export const signin = async (req, res, next) => {
-  const { email, password } = req.body; 
+  const { email, password } = req.body;
 
   if (!email || !password) {
     return res.status(400).json({ message: 'Please fill all the fields!' });
@@ -55,7 +59,7 @@ export const signin = async (req, res, next) => {
 
   try {
     const user = await User.findOne({ email });
-    if (!user) { 
+    if (!user) {
       return res.status(400).json({ message: 'Invalid Email or Password!' });
     }
 
@@ -65,8 +69,8 @@ export const signin = async (req, res, next) => {
     }
 
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
-    res.cookie('token', token, { httpOnly: true, secure: true, sameSite: 'Strict' });
-    user.password = undefined; // Remove password from the user object before sending it in the response
+    res.cookie('access_token', token, { httpOnly: true, secure: true, sameSite: 'Strict' });
+    user.password = undefined;
 
     res.status(200).json({ message: 'User signed in successfully!', user });
 
@@ -76,8 +80,8 @@ export const signin = async (req, res, next) => {
 }
 
 
-export const googleSignIn = async (req, res, next) => { 
-  const { name, email, profilePic } = req.body; 
+export const googleSignIn = async (req, res, next) => {
+  const { name, email, profilePic } = req.body;
 
   if (!name || !email || !profilePic) {
     return res.status(400).json({ message: 'Please fill all the fields!' });
@@ -88,26 +92,26 @@ export const googleSignIn = async (req, res, next) => {
     if (existingUser) {
       const token = jwt.sign({ id: existingUser._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
       res.cookie('token', token, { httpOnly: true, secure: true, sameSite: 'Strict' });
-      existingUser.password = undefined; // Remove password from the user object before sending it in the response
+      existingUser.password = undefined;
 
       return res.status(200).json({ message: 'User signed in successfully!', user: existingUser });
     }
 
-    const generatedPassword = Math.random().toString(36).slice(-8); // Generate a random password
-    const hashedPassword = await bcrypt.hash(generatedPassword, 10); // Hash the generated password
+    const generatedPassword = Math.random().toString(36).slice(-8); 
+    const hashedPassword = await bcrypt.hash(generatedPassword, 10);
     const newUser = new User({
-      name : req.body.name.split(' ').join('').toLowerCase() + Math.random().toString(36).slice(-4), // Remove spaces and convert to lowercase
+      name: req.body.name.split(' ').join('').toLowerCase() + Math.random().toString(36).slice(-4),
       email,
       password: hashedPassword,
       profilePic,
     });
 
     await newUser.save();
-    
+
     const token = jwt.sign({ id: newUser._id }, process.env.JWT_SECRET, { expiresIn: '100h' });
     res.cookie('token', token, { httpOnly: true, secure: true, sameSite: 'Strict' });
-    newUser.password = undefined; // Remove password from the user object before sending it in the response
-    
+    newUser.password = undefined; 
+
     res.status(201).json({ message: 'User signed up successfully!', user: newUser });
 
   } catch (error) {
