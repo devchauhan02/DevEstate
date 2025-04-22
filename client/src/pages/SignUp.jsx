@@ -61,7 +61,7 @@ const SignUp = () => {
             id="password"
             onChange={handleChange}
           />
-          <button className="bg-slate-900 text-white p-2 rounded-lg uppercase hover:opacity-90 disabled:opacity-75">
+          <button className="bg-slate-900 text-white p-2 rounded-lg uppercase hover:opacity-90 disabled:opacity-75 cursor-pointer">
             Sign Up
           </button>
         </div>

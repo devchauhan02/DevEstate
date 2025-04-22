@@ -61,7 +61,7 @@ export const signin = async (req, res, next) => {
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
-      return res.status(400).json({ message: 'Invalid Email or Pasword!' });
+      return res.status(400).json({ message: 'Invalid Email or Password!' });
     }
 
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
@@ -69,6 +69,7 @@ export const signin = async (req, res, next) => {
     user.password = undefined; // Remove password from the user object before sending it in the response
 
     res.status(200).json({ message: 'User signed in successfully!', user });
+
   } catch (error) {
     next(error);
   }
