@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import OAuth from '../components/OAuth';
 
 const SignUp = () => {
   const [formData, setFormData] = useState({ name: '', email: '', password: '' });
@@ -64,6 +65,7 @@ const SignUp = () => {
           <button className="bg-slate-900 text-white p-2 rounded-lg uppercase hover:opacity-90 disabled:opacity-75 cursor-pointer">
             Sign Up
           </button>
+          <OAuth /> 
         </div>
         <p className="text-center mt-4">
           Already have an account?{' '}

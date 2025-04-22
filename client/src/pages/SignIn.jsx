@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { signInStart , signInFailure , signInSuccess } from '../redux/user/userSlice';
+import OAuth from '../components/OAuth';
 
 const SignIn = () => {
   const [formData, setFormData] = useState({ email: '', password: '' });
@@ -58,13 +59,14 @@ const SignIn = () => {
             id="password"
             onChange={handleChange}
           />
-          <button className="bg-slate-900 text-white p-2 rounded-lg uppercase hover:opacity-90 disabled:opacity-75">
+          <button  className="bg-slate-900 text-white p-2 rounded-lg uppercase hover:opacity-90 disabled:opacity-75 cursor-pointer">
             Sign In
           </button>
+          <OAuth /> 
         </div>
         <p className="text-center mt-4">
           Don't have an account?{' '}
-          <button
+          <button 
             type="button"
             className="text-blue-600 font-semibold cursor-pointer"
             onClick={() => navigate('/signup')}

@@ -74,3 +74,43 @@ export const signin = async (req, res, next) => {
     next(error);
   }
 }
+
+
+export const googleSignIn = async (req, res, next) => { 
+  const { name, email, profilePic } = req.body; 
+
+  if (!name || !email || !profilePic) {
+    return res.status(400).json({ message: 'Please fill all the fields!' });
+  }
+
+  try {
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      const token = jwt.sign({ id: existingUser._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+      res.cookie('token', token, { httpOnly: true, secure: true, sameSite: 'Strict' });
+      existingUser.password = undefined; // Remove password from the user object before sending it in the response
+
+      return res.status(200).json({ message: 'User signed in successfully!', user: existingUser });
+    }
+
+    const generatedPassword = Math.random().toString(36).slice(-8); // Generate a random password
+    const hashedPassword = await bcrypt.hash(generatedPassword, 10); // Hash the generated password
+    const newUser = new User({
+      name : req.body.name.split(' ').join('').toLowerCase() + Math.random().toString(36).slice(-4), // Remove spaces and convert to lowercase
+      email,
+      password: hashedPassword,
+      profilePic,
+    });
+
+    await newUser.save();
+    
+    const token = jwt.sign({ id: newUser._id }, process.env.JWT_SECRET, { expiresIn: '100h' });
+    res.cookie('token', token, { httpOnly: true, secure: true, sameSite: 'Strict' });
+    newUser.password = undefined; // Remove password from the user object before sending it in the response
+    
+    res.status(201).json({ message: 'User signed up successfully!', user: newUser });
+
+  } catch (error) {
+    next(error);
+  }
+}
