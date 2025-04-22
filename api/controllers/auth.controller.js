@@ -1,6 +1,7 @@
 import User from "../models/user.model.js";
 import bcrypt from "bcryptjs";
 import errorHandler from "../utils/error.js";
+import jwt from "jsonwebtoken";
 
 const signup = async (req, res, next) => {    
     console.log('Signup request received:', req.body);  
@@ -43,3 +44,32 @@ const signup = async (req, res, next) => {
   }
 }       
 export default signup; 
+
+
+export const signin = async (req, res, next) => {
+  const { email, password } = req.body; 
+
+  if (!email || !password) {
+    return res.status(400).json({ message: 'Please fill all the fields!' });
+  }
+
+  try {
+    const user = await User.findOne({ email });
+    if (!user) { 
+      return res.status(400).json({ message: 'Invalid Email or Password!' });
+    }
+
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      return res.status(400).json({ message: 'Invalid Email or Pasword!' });
+    }
+
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+    res.cookie('token', token, { httpOnly: true, secure: true, sameSite: 'Strict' });
+    user.password = undefined; // Remove password from the user object before sending it in the response
+
+    res.status(200).json({ message: 'User signed in successfully!', user });
+  } catch (error) {
+    next(error);
+  }
+}
