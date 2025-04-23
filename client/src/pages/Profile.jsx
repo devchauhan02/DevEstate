@@ -1,7 +1,8 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useSelector } from 'react-redux';
-import {updateUserStart, updateUserFailure, updateUserSuccess} from '../redux/user/userSlice.js';
+import {updateUserStart, updateUserFailure, updateUserSuccess, signOut ,deleteUserStart,deleteUserSuccess} from '../redux/user/userSlice.js';
 import { useDispatch } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 
 const Profile = () => {
   const { currentUser , token } = useSelector((state) => state.user);
@@ -10,6 +11,8 @@ const Profile = () => {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [profilePic, setProfilePic] = useState(currentUser.profilePic);
   const [uploading, setUploading] = useState(false);
+
+  const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
     name: currentUser.name,
@@ -106,6 +109,50 @@ const Profile = () => {
     } 
   }
 
+  const handleDelete = async () => {
+    try {
+      const res = await fetch(`/api/user/delete/${currentUser.id}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (res.ok) {
+        dispatch(deleteUserStart());
+        navigate('/signin');
+        console.log('Account deleted successfully');
+      } else {
+        console.error('Failed to delete account');
+      }
+    } catch (error) {
+      console.error('Error deleting account:', error);
+    }
+  }
+
+  const handleSignOut = async () => {
+    try {
+      const res = await fetch('/api/auth/logout', {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }); 
+
+      if (res.ok) { 
+        dispatch(signOut());
+        navigate('/signin');
+        console.log('Logged out successfully');
+      }
+      else {
+        console.error('Failed to log out');
+      }
+    }
+    catch (error) {
+      console.error('Error logging out:', error);
+    }
+  }
+
   return (
     <div className="flex items-center justify-center px-4 mt-10">
       <div className="w-full max-w-md">
@@ -171,8 +218,8 @@ const Profile = () => {
         </form>
 
         <div className="flex justify-between mt-6 text-sm">
-          <span className="text-red-500 font-medium cursor-pointer">Delete account</span>
-          <span className="text-red-500 font-medium cursor-pointer">Sign Out</span>
+          <span className="text-red-500 font-medium cursor-pointer" onClick={handleDelete}>Delete account</span>
+          <span className="text-red-500 font-medium cursor-pointer" onClick={handleSignOut}>Sign Out</span>
         </div>
       </div>
     </div>
