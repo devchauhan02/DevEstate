@@ -117,7 +117,12 @@ export const googleSignIn = async (req, res, next) => {
         { expiresIn: '30d' }
       );
 
-      res.cookie('token', token, { httpOnly: true, secure: true, sameSite: 'Strict' });
+      res.cookie('access_token', token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production', // Use secure cookies in production
+        sameSite: 'Strict',
+      });
+  
       existingUser.password = undefined;
 
       return res.status(200).json({
