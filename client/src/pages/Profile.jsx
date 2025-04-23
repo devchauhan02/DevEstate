@@ -1,13 +1,23 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useSelector } from 'react-redux';
+import {updateUserStart, updateUserFailure, updateUserSuccess} from '../redux/user/userSlice.js';
+import { useDispatch } from 'react-redux';
 
 const Profile = () => {
-  const { currentUser } = useSelector((state) => state.user);
+  const { currentUser , token } = useSelector((state) => state.user);
   const fileRef = useRef();
   const [file, setFile] = useState(null);
   const [uploadProgress, setUploadProgress] = useState(0);
-  const [profilePic, setProfilePic] = useState(currentUser.user.profilePic);
+  const [profilePic, setProfilePic] = useState(currentUser.profilePic);
   const [uploading, setUploading] = useState(false);
+
+  const [formData, setFormData] = useState({
+    name: currentUser.name,
+    email: currentUser.email,
+    password: '',
+  });
+
+  const dispatch = useDispatch();
 
   useEffect(() => {
     if (file) {
@@ -38,6 +48,7 @@ const Profile = () => {
         if (xhr.status === 200) {
           const data = JSON.parse(xhr.responseText);
           setProfilePic(data.secure_url);
+          setFormData((prev) => ({ ...prev, profilePic: data.secure_url }));
           console.log('Upload successful:', data.secure_url);
         } else {
           console.error('Upload failed:', xhr.responseText);
@@ -55,6 +66,45 @@ const Profile = () => {
       console.error('Upload exception:', error);
     }
   };
+
+  const handleChange = (e) => {
+    const { id, value } = e.target;
+    setFormData((prev) => ({ ...prev, [id]: value }));
+  };
+
+  const handleSubmit = async (e) => { 
+    e.preventDefault();
+    const { name, email, password } = formData;
+    const updatedData = {
+      name,
+      email,  
+      password,
+      profilePic,
+    };  
+
+    try {
+      dispatch(updateUserStart());
+      const res = await fetch(`/api/user/update/${currentUser.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(updatedData),
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        dispatch(updateUserSuccess(data.user));
+      } else {
+        dispatch(updateUserFailure(data.message || 'Failed to update profile'));
+
+      }
+    }
+    catch (error) {
+      dispatch(updateUserFailure(error.message));
+    } 
+  }
 
   return (
     <div className="flex items-center justify-center px-4 mt-10">
@@ -82,38 +132,46 @@ const Profile = () => {
                 <p className="text-white text-sm font-medium">{uploadProgress}%</p>
               </div>
             )}
-
           </div>
           <h2 className="text-xl font-semibold mt-4">{currentUser.name}</h2>
-          <p className="text-gray-600 text-sm">{currentUser.email}</p>
+          {/* <p className="text-gray-600 text-sm">{currentUser.email}</p> */}
         </div>
 
-        <form className="flex flex-col gap-4 rounded-lg">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4 rounded-lg">
           <input
             type="text"
+            id="name"
             placeholder="username"
+            value={formData.name}
+            onChange={handleChange}
             className="border border-gray-300 px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-slate-100"
           />
           <input
             type="email"
+            id="email"
             placeholder="email"
+            value={formData.email}
+            onChange={handleChange}
             className="border border-gray-300 px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-slate-100"
           />
           <input
             type="password"
+            id="password"
             placeholder="password"
+            value={formData.password}
+            onChange={handleChange}
             className="border border-gray-300 px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-slate-100"
           />
           <button
             type="submit"
-            className="bg-slate-800 text-white px-4 py-2 uppercase hover:opacity-90 transition rounded-lg cursor-pointer"
+            className="bg-slate-800 text-white px-4 py-2 uppercase hover:opacity-35 transition rounded-lg cursor-pointer"
           >
             Update
           </button>
         </form>
 
         <div className="flex justify-between mt-6 text-sm">
-          <span className="text-red-500 font-medium cursor-pointer">Delete Account</span>
+          <span className="text-red-500 font-medium cursor-pointer">Delete account</span>
           <span className="text-red-500 font-medium cursor-pointer">Sign Out</span>
         </div>
       </div>

@@ -24,7 +24,7 @@ const Header = () => {
                     <li className='text-slate-600 hover:text-slate-900 cursor-pointer hidden sm:inline'>About</li>
                 </Link> 
                 <Link to = '/profile'>
-                   {currentUser ? ( <img className = "rounded-full h-6 w-6 object-cover" src= {currentUser.user.profilePic} alt="Profile" />) :
+                   {currentUser ? ( <img className = "rounded-full h-6 w-6 object-cover" src= {currentUser.profilePic} alt="Profile" />) :
                     (<li className='text-slate-600 hover:text-slate-900 cursor-pointer'>Sign In</li>)
                    }
                 </Link>

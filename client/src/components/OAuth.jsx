@@ -26,7 +26,7 @@ const OAuth = () => {
             });
             const data = await res.json();
             if (res.ok) {
-                dispatch(signInSuccess(data));
+                dispatch(signInSuccess({ user: data.user, token: data.token }));
                 navigate('/profile');
             } else {
                 dispatch(signInFailure(data.message));

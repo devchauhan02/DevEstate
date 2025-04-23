@@ -1,7 +1,6 @@
+
 import User from '../models/user.model.js';
 import bcrypt from 'bcryptjs';
-
-
 
 export const updateProfilePic = async (req, res) => {
   const { profilePic } = req.body;
@@ -20,33 +19,58 @@ export const updateProfilePic = async (req, res) => {
 
 
 export const updateUser = async (req, res) => {
-  const userId = req.params.id;
+  const { id } = req.params;
   const { name, email, password, profilePic } = req.body;
 
   try {
-    const updatedFields = {};
-
-    if (name) updatedFields.name = name;
-    if (email) updatedFields.email = email;
-    if (profilePic) updatedFields.profilePic = profilePic;
-
-    if (password) {
-      updatedFields.password = await bcrypt.hash(password, 10); 
-    }
-
-    const updatedUser = await User.findByIdAndUpdate(userId, updatedFields, {
-      new: true,
-    });
-
-    if (!updatedUser) {
+    // Find the user by ID
+    const user = await User.findById(id);
+    if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    updatedUser.password = undefined;
-    res.status(200).json({ message: 'User updated successfully', user: updatedUser });
+    // Update user fields
+    if (name) user.name = name;
+    if (email) user.email = email;
+    if (password) {
+      const hashedPassword = await bcrypt.hash(password, 10);
+      user.password = hashedPassword;
+    }
+    if (profilePic) user.profilePic = profilePic;
 
+    // Save the updated user
+    const updatedUser = await user.save();
+
+    res.status(200).json({
+      message: 'User updated successfully!',
+      user: {
+        id: updatedUser._id,
+        name: updatedUser.name,
+        email: updatedUser.email,
+        profilePic: updatedUser.profilePic,
+      },
+    });
   } catch (error) {
-    console.error('Update Error:', error);
+    console.error('Error updating user:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
 };
+
+export const deleteUser = async (req, res , next) => {
+  if (req.user.id !== req.params.id) {
+    return res.status(403).json({ message: 'You can only delete your own account' });
+  }
+  const { id } = req.params;
+
+  try {
+    // Find the user by ID and delete
+    const user = await User.findByIdAndDelete(id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    res.status(200).json({ message: 'User deleted successfully!' });
+  } catch (error) {
+    next(error);
+  }
+};  

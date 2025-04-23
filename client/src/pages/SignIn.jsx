@@ -20,7 +20,7 @@ const SignIn = () => {
     setError(''); 
     try {
       dispatch(signInStart());
-      const res = await fetch('/api/auth/signin', {
+      const res = await fetch('api/auth/signin', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -30,6 +30,7 @@ const SignIn = () => {
       const data = await res.json();
       if (res.ok) {
         dispatch(signInSuccess(data)); 
+        console.log('Backend response:', data);
         navigate('/profile'); 
       } else {
         dispatch(signInFailure(data.message));
